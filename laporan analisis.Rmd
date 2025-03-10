@@ -1,0 +1,109 @@
+---
+title: "Laporan Analisis Prediksi"
+author: "Raisya Rizki Insani"
+date: "3/10/2025"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Pendahuluan
+Laporan ini berisi analisis prediksi menggunakan model Random Forest untuk memprediksi variabel `classe` berdasarkan data yang diberikan. Tujuan dari proyek ini adalah untuk membangun model prediktif yang akurat dan menjelaskan langkah-langkah yang dilakukan.
+
+## Eksplorasi Data
+Pada bagian ini, dilakukan eksplorasi data untuk memahami struktur dan karakteristik dataset.
+
+### Struktur Data
+Menampilkan struktur dataset untuk memahami tipe data yang digunakan:
+```{r}
+str(training_data)
+```
+
+### Ringkasan Statistik
+Menampilkan statistik dasar dari dataset:
+```{r}
+summary(training_data)
+```
+
+## Pra-pemrosesan Data
+Sebelum membangun model, data diproses dengan menghapus kolom yang tidak relevan dan menangani nilai yang hilang.
+
+### Menghapus Kolom yang Tidak Relevan
+Kolom seperti ID dan timestamp dihapus karena tidak berkontribusi pada prediksi.
+```{r}
+# Hapus kolom yang tidak relevan
+training_data <- training_data[, -c(1:7)]
+testing_data <- testing_data[, -c(1:7)]
+```
+
+### Menangani Nilai yang Hilang
+Kolom dengan banyak nilai `NA` dihapus dari dataset untuk memastikan kualitas data yang lebih baik.
+```{r}
+# Hapus kolom dengan banyak nilai NA
+training_data <- training_data[, colSums(is.na(training_data)) == 0]
+testing_data <- testing_data[, colSums(is.na(testing_data)) == 0]
+```
+
+## Pembagian Data
+Data latihan dibagi menjadi set pelatihan dan validasi untuk evaluasi model.
+```{r}
+# Bagi data latihan menjadi set pelatihan dan validasi
+set.seed(123)
+trainIndex <- createDataPartition(training_data$classe, p = 0.8, list = FALSE)
+trainData <- training_data[trainIndex, ]
+validationData <- training_data[-trainIndex, ]
+```
+
+## Pelatihan Model
+Model Random Forest digunakan untuk memprediksi variabel `classe`.
+
+### Pelatihan Model
+```{r}
+library(randomForest)
+# Latih model Random Forest
+model <- randomForest(classe ~ ., data = trainData, ntree = 100)
+```
+
+### Ringkasan Model
+Menampilkan performa awal model:
+```{r}
+print(model)
+```
+
+## Evaluasi Model
+Model dievaluasi menggunakan data validasi untuk mengukur akurasi.
+
+### Prediksi pada Data Validasi
+```{r}
+# Prediksi pada data validasi
+predictions <- predict(model, validationData)
+```
+
+### Matriks Konfusi
+```{r}
+library(caret)
+# Tampilkan matriks konfusi
+confusionMatrix(predictions, validationData$classe)
+```
+
+## Prediksi pada Data Pengujian
+Model digunakan untuk memprediksi 20 kasus uji yang diberikan.
+
+### Hasil Prediksi
+```{r}
+# Prediksi pada data pengujian
+finalPredictions <- predict(model, testing_data)
+print(finalPredictions)
+```
+Hasil prediksi: B A B A A E D B A A B C B A E E A B B B
+
+## Kesimpulan
+Berdasarkan analisis yang dilakukan, model Random Forest menunjukkan performa yang baik dalam memprediksi variabel `classe`. Akurasi model pada data validasi adalah `r confusionMatrix(predictions, validationData$classe)$overall['Accuracy']`.
+
+Meskipun model memiliki akurasi tinggi, ada kemungkinan terjadi overfitting. Untuk meningkatkan generalisasi model, dapat dilakukan tuning hyperparameter atau menggunakan metode validasi silang yang lebih kompleks.
+
+## Referensi
+- Dataset: [PML Training Data](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv)
+- Paket R: `randomForest`, `caret`, `rmarkdown`
